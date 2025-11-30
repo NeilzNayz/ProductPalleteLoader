@@ -5,6 +5,7 @@ from PyQt6.QtCore import Qt
 
 class QT_Window:
     def __init__(self, app:QApplication) -> None:
+        super().__init__()
         self.screen_size = app.primaryScreen().size()
         self.window = QWidget()
         self.window.setWindowTitle("Testing QT")
@@ -23,6 +24,7 @@ class QT_Window:
                                  "font-style:italic;" \
                                  "text-decoration: underline")
         self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self
 
 def init_ui() -> QT_Window:
     app = QApplication(sys.argv)

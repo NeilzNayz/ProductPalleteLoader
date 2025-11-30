@@ -1,14 +1,5 @@
-import sys
-
-class Item:
-    pos_x: float = 0
-    pos_y: float = 0
-
-    def __init__(self, id:int, width:float, lenght:float, height:float) -> None:
-        self.id = id
-        self.width = width
-        self.lenght = lenght
-        self.height = height
+from .pattern_finder import find_best_solution
+from .models import Item
 
 def max_palette_load(p_lenght:float, p_width:float,
                      i_lenght:float, i_width:float) -> int:
@@ -18,15 +9,17 @@ def max_palette_load(p_lenght:float, p_width:float,
 
 def calc(p_lenght:float, p_width:float, p_height:float,
          i_lenght:float, i_width:float, i_height:float,
-         max_loaded_height:float) -> str:
+         max_loaded_height:float) -> list[Item]:
     
-    #Values check
+    #Checking values
+    if min(p_lenght,p_width,p_height,i_lenght,i_width,i_height,max_loaded_height) < 0:
+        raise ValueError(f"Value Error: Values cannot be less than zero.\np_lenght:{p_lenght}\np_width:{p_width}\np_height:{p_height}\ni_lenght{i_lenght}\ni_width{i_width}\ni_height{i_height}")
     if p_height + i_height > max_loaded_height:
         raise ValueError(f"Value Error: Palette with items are higher then maximum allowed height\nmaximum allowed height: {max_loaded_height}\npalette and items heights: {p_height + i_height}")
     if max(p_lenght, p_width) > max(i_lenght, i_width) and min(p_lenght, p_width) > min(i_lenght, i_width) == False:
         raise ValueError(f"Value Error: Items are bigger than the palette.\nPalette size:{p_lenght}x{p_width}\nItem size:{i_lenght}x{i_width}")
 
-    #Counting possible amount of items to load and making a list with them 
+    #Calculating possible amount of items to load and making a list with them 
     max_load = max_palette_load(p_lenght, p_width, i_lenght, i_width)
 
     items:list[Item] = []
@@ -34,4 +27,5 @@ def calc(p_lenght:float, p_width:float, p_height:float,
         items.append(
             Item(id=i, lenght=i_lenght, width=i_width, height=i_height))
 
-    return f"Max box on a palette is: {max_load}"
+    #finding best pattern
+    return find_best_solution(p_lenght=p_lenght,p_width=p_width,p_height=p_height,items=items)
