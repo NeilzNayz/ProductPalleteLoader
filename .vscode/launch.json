@@ -1,0 +1,14 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Test Module Debug",
+            "type": "debugpy",
+            "request": "launch",
+            //"module": "Tests.test", // <-- Указываем полный путь к модулю (без .py)
+            "module": "UI.qt_ui.qt_ui",
+            "cwd": "${workspaceFolder}", // <-- Убеждаемся, что запускаемся из корня проекта
+            "justMyCode": true
+        }
+    ]
+}
