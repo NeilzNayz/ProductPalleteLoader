@@ -3,7 +3,7 @@ from Core.models import *
 from Core.pattern_finder import *
 
 def FirstAlgorithTest():
-    solutions = calc(
+    solutions = generate_solutions(
         p_lenght=15.2,
         p_width =10.2,
         p_height=100,
