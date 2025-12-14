@@ -21,6 +21,22 @@ class Solution():
         self.items_placed_num = items_placed_num
         self.main_orientation = main_orientation
         self.possible_i_amount = possible_i_amount
+class UserData():
+    p_height = 0.0
+    p_lenght = 0.0
+    p_width = 0.0
+    i_height = 0.0
+    i_lenght = 0.0
+    i_width = 0.0
+    max_height = 0.0
+
+    is_p_height_correct = False
+    is_p_lenght_correct = False
+    is_p_width_correct = False
+    is_i_height_correct = False
+    is_i_lenght_correct = False
+    is_i_width_correct = False
+    is_max_height_correct = False
 
 class PlaceMode(Enum):
     FromLeft=1,
