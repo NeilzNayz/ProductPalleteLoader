@@ -1,11 +1,11 @@
 from .pattern_finder import generate_solution
 from .models import Item, Solution, Orientation, UserData
-import copy
+import copy, math
 
 def max_load_count(p_lenght:float, p_width:float, i_lenght:float, i_width:float) -> int:
-    l1 = (p_lenght // i_lenght) * (p_width // i_width) + ((p_lenght % i_lenght) // i_width) * (p_width // i_lenght)
-    l2 = (p_lenght // i_width) * (p_width // i_lenght) + ((p_lenght % i_width) // i_lenght) * (p_width // i_width)
-    return int(max(l1,l2))
+    l1 = math.floor(p_lenght // i_lenght) * math.floor(p_width // i_width) + math.floor((p_lenght % i_lenght) // i_width) * math.floor(p_width // i_lenght)
+    l2 = math.floor(p_lenght // i_width) * math.floor(p_width // i_lenght) + math.floor((p_lenght % i_width) // i_lenght) * math.floor(p_width // i_width)
+    return int(max(math.floor(l1),math.floor(l2)))
 
 def generate_solutions(u_data:UserData) -> list[Solution]:
     #Value check

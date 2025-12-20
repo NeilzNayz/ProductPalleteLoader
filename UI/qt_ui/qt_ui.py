@@ -1,12 +1,32 @@
 import sys
-from Core.models import UserData, Solution
+from Core.models import UserData, Solution, Item
 from Core.main import generate_solutions
-from PyQt6.QtWidgets import QApplication, QWidget, QHBoxLayout, QVBoxLayout, QLabel, QLineEdit, QPushButton, QGraphicsView, QGraphicsScene, QGraphicsRectItem
+from PyQt6.QtWidgets import QApplication, QWidget, QHBoxLayout, QVBoxLayout, QLabel, QLineEdit, QPushButton, QGraphicsView, QGraphicsRectItem, QGraphicsEllipseItem, QGraphicsScene, QGraphicsRectItem
 from PyQt6.QtCore import Qt, QSize
 from PyQt6.QtWidgets import  QMainWindow
 from PyQt6.QtGui import QGuiApplication, QWheelEvent, QBrush, QPen
 from PyQt6 import QtWidgets, QtGui, QtCore
 
+class ProductItem(QGraphicsRectItem):
+    def __init__(self, item:Item, user_data:UserData) -> None:
+        super().__init__(0,0, item.width, item.lenght)
+        self.setPos(item.pos_x - item.width / 2, user_data.p_lenght - item.lenght / 2 - item.pos_y)
+        # --- Creating Item rectangle ---
+        brush = QBrush(Qt.GlobalColor.transparent)
+        pen = QPen(Qt.GlobalColor.green)
+        pen.setWidth(1)
+        self.setBrush(brush)
+        self.setPen(pen)
+
+        r = min(item.height,item.width)/4
+        self.circle = QGraphicsEllipseItem(0,0, r * 2,r * 2)
+        self.circle.setParentItem(self)
+        self.circle.setPos(item.pos_y, item.pos_x)
+
+        self.circle.setBrush(QBrush(Qt.GlobalColor.transparent))
+        self.circle.setPen(QPen(Qt.GlobalColor.red))
+
+# Zoomable class that inherited by QGraphicsView
 class ZoomableGraphicsView(QtWidgets.QGraphicsView):
     SCALE_FACTOR = 1.1
     def wheelEvent(self, event: QWheelEvent | None) -> None:
@@ -20,11 +40,13 @@ class MainWindow(QMainWindow):
 
     SIZE_MULTIPLAYER = 20
 
+    # Creates a lable aligned by center
     def create_lable_widget(self, lable_text):
         lable = QLabel(lable_text)
         lable.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         return lable
     
+    # Checks if field is empty/spaces or convertable to float 
     def check_field_value(self, text:str, field_var_name:str, field_lable:QLabel):
         if text.isspace() or text == '':
             setattr(self.user_data, f'is_{field_var_name}_correct', False)
@@ -38,6 +60,7 @@ class MainWindow(QMainWindow):
             setattr(self.user_data, f'is_{field_var_name}_correct', False)
             field_lable.setStyleSheet("color: red")
         
+    # Creates layout that contains variable's field and lable  
     def create_field_layout(self, name, field_var_name):
         field_layout = QHBoxLayout()
         field_lable = QLabel(f"{name}: ")
@@ -47,20 +70,31 @@ class MainWindow(QMainWindow):
         field_layout.addWidget(field_line_edit)
         return field_layout
     
-    def visualize_solutions(self, solutions:list[Solution]):
-        print("Visualizing..............")
-        solution = solutions[0]
+    # Visualizes calculated solution
+    def visualize_solution(self, solution:Solution):
+        self.graphic_scene.clear()
+        pallet = QGraphicsRectItem(0, 0, self.user_data.p_width, self.user_data.p_lenght)
+        pallet.setBrush(QBrush(Qt.GlobalColor.transparent))
+        pallet.setPen(QPen(Qt.GlobalColor.red))
+        self.graphic_scene.addItem(pallet)
+
         for item in solution.items:
-            print(f'item info pos: x{item.pos_x} y{item.pos_y}  size: w{item.width} h{item.lenght}  orientation: {item.orientation}')
-            rect_item = QGraphicsRectItem(item.pos_x, self.user_data.p_lenght - item.lenght - item.pos_y, item.width, item.lenght)
-            brush = QBrush(Qt.GlobalColor.red)
-            pen = QPen(Qt.GlobalColor.white)
-            pen.setWidth(1)
-            rect_item.setBrush(brush)
-            rect_item.setPen(pen)
+            print(f'item info pos: x{item.pos_x} y{item.pos_y}  size: w{item.width} l{item.lenght}  orientation: {item.orientation}')
+            rect_item = ProductItem(item=item, user_data=self.user_data)
             self.graphic_scene.addItem(rect_item)
 
-    def generate(self):
+    # Checks that all values filled correctly. Can throw an Exception in calculating/visualizing proccess
+    def btn_generate_logic(self):
+        self.user_data.p_height = 1 * self.SIZE_MULTIPLAYER
+        self.user_data.p_lenght = 15.2 * self.SIZE_MULTIPLAYER
+        self.user_data.p_width = 10.2 * self.SIZE_MULTIPLAYER
+        self.user_data.i_height = 1 * self.SIZE_MULTIPLAYER
+        self.user_data.i_lenght = 4 * self.SIZE_MULTIPLAYER
+        self.user_data.i_width = 2.5 * self.SIZE_MULTIPLAYER
+        self.user_data.max_height = 12 * self.SIZE_MULTIPLAYER
+        self.solutions = generate_solutions(self.user_data)
+        self.visualize_solution(self.solutions[0])
+        return
         try:
             if self.user_data.is_p_height_correct == True and \
             self.user_data.is_p_lenght_correct == True and \
@@ -69,15 +103,21 @@ class MainWindow(QMainWindow):
             self.user_data.is_i_lenght_correct == True and \
             self.user_data.is_i_width_correct  == True and \
             self.user_data.is_max_height_correct == True:
-                self.visualize_solutions(generate_solutions(self.user_data))
+                self.solutions = generate_solutions(self.user_data)
+                self.visualize_solution(self.solutions[0])
+            else:
+                print("Some fields are not filled correctly")
         except Exception as err:
             print(f'Error while generating: {err}')
 
+    # Initalizes left ui panel(buttons, fields and labels) and visualize area(graphics view and graphics scene)
     def init_ui(self):
         # --- Creating conrainers ---
         main_container = QWidget()
         main_layout = QHBoxLayout()
         main_container.setLayout(main_layout)
+
+        self.solutions:list[Solution]
 
         self.ui_panel_container = QWidget()
         self.ui_panel_container.setFixedWidth(250)
@@ -100,7 +140,7 @@ class MainWindow(QMainWindow):
         ui_panel_layout.addLayout(self.create_field_layout('Max height', 'max_height'))
         ui_panel_layout.addSpacing(30)
         generate_button = QPushButton('Generate pattern')
-        generate_button.pressed.connect(self.generate)
+        generate_button.pressed.connect(self.btn_generate_logic)
         ui_panel_layout.addWidget(generate_button)
         ui_panel_layout.addStretch()
 
