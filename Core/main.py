@@ -1,41 +1,42 @@
 from .pattern_finder import place_items
-from .models import Item, Solution, Orientation, UserData
+from .models import Item, Layout, Orientation, UserData
 import math
 
-def generate_solution(u_data:UserData, main_or:Orientation, orig_or:Orientation) -> Solution:
+def generate_solution(u_data:UserData, is_rotated:bool) -> Layout:
     """Generates a solution with a specific Main Orientation"""
-    l1 = math.floor(u_data.p_l / u_data.i_l) * math.floor(u_data.p_w / u_data.i_w)
-    l2 = math.floor(u_data.p_l / u_data.i_w) * math.floor(u_data.p_w / u_data.i_l)
-    max_l = max(l1, l2)
- 
-    # "Aligning" item by MAIN orientation
-    i_w = u_data.i_w if main_or == orig_or else u_data.i_l
-    i_l = u_data.i_l if main_or == orig_or else u_data.i_w
-    i_in_row = int(u_data.p_w / i_w)
-    i_in_col = int(u_data.p_l / i_l)
+    i_l = u_data.i_w if is_rotated else u_data.i_l
+    i_w = u_data.i_l if is_rotated else u_data.i_w
+    i_pos_z = u_data.p_h + u_data.i_h / 2
+    i_in_row = math.floor(u_data.p_w / i_w)
+    i_in_col = math.floor(u_data.p_l / i_l)
+    max_l = i_in_row * i_in_col
+
     i_at_right = 0
     i_at_top = 0
 
     items:list[Item] = []
     for i in range(max_l):
-        items.append(Item(i+1, u_data.i_l, u_data.i_w, u_data.i_h, main_or))
+        items.append(Item(i+1, i_l, i_w, i_pos_z, u_data.i_h, 90 if is_rotated else 0))
 
-    if main_or is Orientation.Horizontal:
+    if i_w > i_l:
         if u_data.p_w - i_w * i_in_row >= i_l:
-            i_at_right = int(u_data.p_l / i_w)
+            i_at_right = math.floor(u_data.p_l / i_w)
             for i in range(i_at_right):
-                items.append(Item(max_l + i + 1, u_data.i_l, u_data.i_w, u_data.i_h, Orientation.Vertical))
-    elif main_or is Orientation.Vertical:
+                items.append(Item(max_l + i + 1, i_w, i_l, u_data.i_h, i_pos_z, 0 if is_rotated else 90))
+    elif i_w < i_l:
         if u_data.p_l - i_l * i_in_col >= i_w:
-            # "Aligning" item by HORIZONTAL orientation
-            i_at_top = int(u_data.p_w / i_l)
+            i_at_top = math.floor(u_data.p_w / i_l)
             for i in range(i_at_top):
-                items.append(Item(max_l + i + 1, u_data.i_l, u_data.i_w, u_data.i_h, Orientation.Horizontal))
+                items.append(Item(max_l + i + 1, i_w, i_l, u_data.i_h, i_pos_z, 0 if is_rotated else 90))
 
-    return place_items(u_data, items, i_in_row, i_in_col, i_at_right, i_at_top, max_l, orig_or)
+    solution = place_items(u_data, items, i_in_row, i_in_col, i_at_right, i_at_top, max_l)
+    for i in solution.items:
+        i.lenght = u_data.i_l
+        i.width = u_data.i_w
+    return solution
 
 # Generates array of solutions
-def generate_solutions(u_data:UserData) -> list[Solution]:
+def generate_layouts(u_data:UserData) -> list[Layout]:
     """Generates an array of solutions"""
     # --- Value check ---
     if min(u_data.p_l,u_data.p_w,u_data.p_h,u_data.i_l,u_data.i_w,u_data.i_h,u_data.max_h) <= 0:
@@ -46,21 +47,18 @@ def generate_solutions(u_data:UserData) -> list[Solution]:
         raise ValueError(f"Value Error: Items are bigger than the palette.\nPalette size:{u_data.p_l}x{u_data.p_w}\nItem size:{u_data.i_l}x{u_data.i_w}")
     
     # --- Calculating best layout and generating solutions depending on it ---
-    orig_or = Orientation.Vertical if u_data.i_l > u_data.i_w else Orientation.Horizontal
-    solutions:list[Solution] = []
-    solutions.append(generate_solution(u_data, Orientation.Vertical, orig_or))
-    solutions.append(generate_solution(u_data, Orientation.Horizontal, orig_or))
+    solutions:list[Layout] = []
+    solutions.append(generate_solution(u_data, False))
+    solutions.append(generate_solution(u_data, True))
 
-    print(f'Which are pidorasi?')
-    print(f'solution 1: {solutions[0].max_i}')
-    print(f'solution 2: {solutions[1].max_i}')
-
+    # --- Removing solutions with out of bounds boxes
+    right_solutions:list[Layout] = []
     if solutions.__len__() > 1:
-        if solutions[0].max_i == -1:
-            solutions.remove(solutions[0])
-        elif solutions[1].max_i == -1:
-            solutions.remove(solutions[1])
+        for solution in solutions:
+            if not solution.out_of_bounds:
+                right_solutions.append(solution)
 
+    # --- Removing solution with less items on a pallete
     if solutions.__len__() > 1:
         if solutions[0].max_i > solutions[1].max_i:
             solutions.remove(solutions[1])
