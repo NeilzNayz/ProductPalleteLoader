@@ -4,5 +4,5 @@ venv/
 .vscode/
 
 #Ignore compiled python files
-__pycache/
+__pycache__/
 *.pyc
