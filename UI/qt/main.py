@@ -11,8 +11,7 @@ from PyQt6.QtCore import Qt, QSize, QThread, pyqtSignal
 from PyQt6.QtWidgets import  QMainWindow
 from PyQt6.QtGui import QGuiApplication, QBrush, QPen, QColor
 from PyQt6 import QtWidgets
-from UI.qt.models import ProductItem, ZoomableGraphicsView, CenteredLabel, InvisableLable, InvisableLable
-import os
+from UI.qt.models import ProductItem, ZoomableGraphicsView, CenteredLabel, InvisableLable
 
 def clear_console():
     sys.stdout.write("\033[2J\033[H")
